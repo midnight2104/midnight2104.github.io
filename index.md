@@ -45,7 +45,8 @@ test_x, test_y =  codes[test_idx],labels_vecs[test_idx]
 
 ```
 
-- 权重的初始化，我们希望初始化的权重非常接近零但又不为零。一般建议在[-y,y]   ![image](http://latex.codecogs.com/gif.latex?%24%20y%3D1/%5Csqrt%7Bn%7D%20%24) $($ n $ 是输入的数量).
+- 权重的初始化，我们希望初始化的权重非常接近零但又不为零。一般建议在[-y,y] 
+![image](http://latex.codecogs.com/gif.latex?%24%20y%3D1/%5Csqrt%7Bn%7D%20%24) ( n 是输入的数量).
 
 - bias的初始化，建议使用tf.zeros来初始化为零值
 - 池化层放在激活层前面，可以减少激活层的计算量
