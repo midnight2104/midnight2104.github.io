@@ -7,7 +7,7 @@ permalink:           pretty
 # Setup
 title:               Midnight
 url:                 https://github.com/midnight2104
-baseurl:             ''
+baseurl:             https://midnight2104.github.io
 paginate:            5
 
 # About/contact
