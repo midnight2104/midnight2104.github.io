@@ -5,15 +5,11 @@
 <!-- Toggleable sidebar -->
 <div class="sidebar" id="sidebar">
   <div class="sidebar-item">
-    <p>{{ site.description }}</p>
+    <p>There is a crack in everything,that's how the light gets in.</p>
   </div>
 
   <nav class="sidebar-nav">
     <a class="sidebar-nav-item{% if page.url == site.baseurl %} active{% endif %}" href="{{ site.baseurl }}/">Home</a>
-
-    {% comment %}
-      There is a Crack in Everything, that's How the Light Gets in 。
-    {% endcomment %}
 
     {% assign pages_list = site.pages | sort:"url" %}
     {% for node in pages_list %}
@@ -25,13 +21,13 @@
     {% endfor %}
 
    
-    <a class="sidebar-nav-item" href="https://github.com/midnight2104">GitHub: https://github.com/midnight2104</a>
+    <a class="sidebar-nav-item" href="https://github.com/midnight2104">GitHub</a>
     <span class="sidebar-nav-item">email: ll2104@163.com</span>
   </nav>
 
   <div class="sidebar-item">
     <p>
-      &copy;This blog is based on <a href="https://github.com/poole/lanyon">Lanyon<a/>.
+      &copy; This blog is based on <a href="https://github.com/poole/lanyon">Lanyon</a>.
       
     </p>
   </div>
