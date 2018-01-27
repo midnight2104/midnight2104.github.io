@@ -6,10 +6,9 @@ permalink:           pretty
 
 # Setup
 title:               Midnight
-description:         'There is a Crack in Everything, that's How the Light Gets in 。'
 url:                 https://github.com/midnight2104
 baseurl:             https://midnight2104.github.io
-paginate:            5
+paginate:            3
 
 # About/contact
 author:
