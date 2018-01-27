@@ -1,6 +1,7 @@
 ---
 layout: post
 title: Anaconda的简单使用
+tags: deep-learning
 ---
 
 ##### Anaconda : 管理 Python 所用的包和环境。
