@@ -1,22 +1,22 @@
 ---
 layout: post
 title: 关系抽取论文解读-Relation classification via convolutional deep neural network
-tags: deep-learning|relation-extraction|knowledge-graph
+tags: relation-extraction
 ---
 关系抽取是从一个句子中判断出这个句子里面两个实体之间的关系。
 >比如给定句子：
-```
+```python
 1	"The system as described above has its greatest application in an arrayed <e1>configuration</e1> of antenna <e2>elements</e2>."
 Component-Whole(e2,e1)
 Comment: Not a collection: there is structure here, organisation.
 
 ```
 
-上面的句子是数据集[SemEval 2010 Task 8 数据集](http://kozareva.com/downloads.html)中的一个训练集的实际样本，1表示第一条句子，`<e1>configuration</e1>` 是指明了实体一， `<e2>elements</e2>`是指明了实体二，`Component-Whole(e2,e1)`表明了两个实体之间的关系是`Component-Whole`关系。`Comment`是对句子的一些描述信息。
+上面的句子是数据集[SemEval 2010 Task 8 数据集
+](http://kozareva.com/downloads.html)中的一个训练集的实际样本，1表示第一条句子，`<e1>configuration</e1>` 是指明了实体一， `<e2>elements</e2>`是指明了实体二，`Component-Whole(e2,e1)`表明了两个实体之间的关系是`Component-Whole`关系。`Comment`是对句子的一些描述信息。
 
 数据集SemEval 2010 Task 8中关系是9种，为了区别正反（`Cause-Effect(e1,e2)`与`Cause-Effect(e2,e1)`看作是两种关系）和其他（`other`,有些句子中的实体关系不是给定的关系）一共是19种关系：
-
-```
+```python
 (1) Cause-Effect
 (2) Instrument-Agency
 (3) Product-Producer
@@ -30,11 +30,9 @@ Comment: Not a collection: there is structure here, organisation.
 
 那么我们要根据训练集训练出的模型对句子中的关系进行预测。
 
-
-```
+```python
 A few days before the service, Tom Burris had thrown into Karen's <e1>casket</e1> his wedding <e2>ring</e2>.
 ```
-
 上面就是测试例子，请给出两个实体之间的关系。这就是我们要做的关系抽取，现在的关系抽取都是有监督的关系抽取，还有半监督的，还有无监督的（开放域的实体关系抽取），这在深度学习中还是研究热点。
 
 
@@ -57,16 +55,14 @@ A few days before the service, Tom Burris had thrown into Karen's <e1>casket</e1
 ![image](http://upyun.midnight2104.com/blog/2018-7-22/recnn2.png)
 
 原始训练文件:
-
-```
+```python
 1"The system as described above has its greatest application in an arrayed     <e1>configuration</e1> of antenna <e2>elements</e2>."
 Component-Whole(e2,e1)
 Comment: Not a collection: there is structure here, organisation.
 ```
 
 处理后的文件:
-
-```
+```python
 3 12 12 15 15 the system as described above has its greatest application in an arrayed configuration of antenna elements
 3 表示关系  Component-Whole(e2,e1)
 12 表示实体1的位置
@@ -74,11 +70,10 @@ Comment: Not a collection: there is structure here, organisation.
 ```
 
 一个句子中的所有词用数字表示：
-
-```
+```python
 Raw_Example(label=3, entity1=PosPair(first=12, last=12), entity2=PosPair(first=15, last=15), sentence=[20093, 19743, 1627, 5836, 587, 9402, 10812, 9031, 1434, 10201, 1210, 1583, 4607, 13862, 1326, 6828])
-```
 
+```
 最终一个句子被表示为一个二维矩阵（也就是word2vec）：
 
 ![image](http://upyun.midnight2104.com/blog/2018-7-22/recnn3.png)
@@ -87,7 +82,6 @@ Raw_Example(label=3, entity1=PosPair(first=12, last=12), entity2=PosPair(first=1
 ##### 词特征：考虑了实体的上下文词
 
 句子:
-
 ```
 "The system as described above has its greatest application in an arrayed     <e1>configuration</e1> of antenna <e2>elements</e2>."
 
@@ -95,12 +89,10 @@ Raw_Example(label=3, entity1=PosPair(first=12, last=12), entity2=PosPair(first=1
 实体2的词特征：实体2的上一个词与下一个词elements上一个词antenna ，下一个词<pad>（没有下一个词用特殊词<pad>来表示）
 用数字表示：
 entity1_context:[4607, 1583, 13862]
-
 entity1_context:[6828, 1326, 22314]
-
 lexical_feature:[4607, 1583, 13862, 6828, 1326, 22314]
-```
 
+```
 最终词特征的向量化表示就是：
 
 ![image](http://upyun.midnight2104.com/blog/2018-7-22/recnn4.png)
@@ -112,12 +104,11 @@ lexical_feature:[4607, 1583, 13862, 6828, 1326, 22314]
 ![image](http://upyun.midnight2104.com/blog/2018-7-22/recnn5.png)
 
 数字化表示就是：
-
-```
+```python
 entity1_posittion: [49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64 ,……, 122]
 entity2_posittion: [46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61 ,……, 122]
-```
 
+```
 向量化表示就是：
 
 ![image](http://upyun.midnight2104.com/blog/2018-7-22/recnn6.png)
