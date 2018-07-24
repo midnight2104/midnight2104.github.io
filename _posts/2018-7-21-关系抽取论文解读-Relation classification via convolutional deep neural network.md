@@ -4,18 +4,19 @@ title: 关系抽取论文解读-Relation classification via convolutional deep n
 tags: relation-extraction
 ---
 关系抽取是从一个句子中判断出这个句子里面两个实体之间的关系。
+
 >比如给定句子：
+
 ```python
 1	"The system as described above has its greatest application in an arrayed <e1>configuration</e1> of antenna <e2>elements</e2>."
 Component-Whole(e2,e1)
 Comment: Not a collection: there is structure here, organisation.
-
 ```
 
-上面的句子是数据集[SemEval 2010 Task 8 数据集
-](http://kozareva.com/downloads.html)中的一个训练集的实际样本，1表示第一条句子，`<e1>configuration</e1>` 是指明了实体一， `<e2>elements</e2>`是指明了实体二，`Component-Whole(e2,e1)`表明了两个实体之间的关系是`Component-Whole`关系。`Comment`是对句子的一些描述信息。
+上面的句子是数据集 [SemEval 2010 Task 8 数据集](http://kozareva.com/downloads.html) 中的一个训练集的实际样本，1表示第一条句子，`<e1>configuration</e1>` 是指明了实体一， `<e2>elements</e2>`是指明了实体二，`Component-Whole(e2,e1)`表明了两个实体之间的关系是`Component-Whole`关系。`Comment`是对句子的一些描述信息。
 
 数据集SemEval 2010 Task 8中关系是9种，为了区别正反（`Cause-Effect(e1,e2)`与`Cause-Effect(e2,e1)`看作是两种关系）和其他（`other`,有些句子中的实体关系不是给定的关系）一共是19种关系：
+
 ```python
 (1) Cause-Effect
 (2) Instrument-Agency
