@@ -1,7 +1,7 @@
 ---
 layout: post
 title: 关系抽取论文解读-Relation classification via convolutional deep neural network
-tags: deep-learning、relation-extraction、knowledge-graph
+tags: deep-learning|relation-extraction|knowledge-graph
 ---
 关系抽取是从一个句子中判断出这个句子里面两个实体之间的关系。
 >比如给定句子：
