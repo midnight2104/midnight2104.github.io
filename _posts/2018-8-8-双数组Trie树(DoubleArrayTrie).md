@@ -6,6 +6,7 @@ tags: NLP
 >双数组Trie (Double-Array Trie)结构由日本人JUN-ICHI AOE于1989年提出的，是Trie结构的压缩形式，仅用两个线性数组来表示Trie树，该结构有效结合了数字搜索树(Digital Search Tree)检索时间高效的特点和链式表示的Trie空间结构紧凑的特点。双数组Trie的本质是一个确定有限状态自动机（DFA），每个节点代表自动机的一个状态，根据变量不同，进行状态转移，当到达结束状态或无法转移时，完成一次查询操作。在双数组所有键中包含的字符之间的联系都是通过简单的数学加法运算表示，不仅提高了检索速度，而且省去了链式结构中使用的大量指针，节省了存储空间。
 ——《基于双数组Ｔｒｉｅ树算法的字典改进和实现》
 
+双数组Trie主要用于分词中加载词典。
 
 Double-Array Tire的本质是一颗树形结构，但是具体实现却是通过两个数组来实现的。Tire树中几个重要的概念
 - STATE：状态，实际为在数组中的下标 
@@ -23,7 +24,7 @@ check[t] = base[s]
 
 #### Double-Array Tire的构造过程
 
-```java
+```
 1 建立根节点root,令base[root] = 1
 2 找出root的子节点 集{root.childreni }(i = 1...n) , 使得 check[root.childreni ] = base[root] = 1
 3 对 each element in  root.children : 
@@ -63,7 +64,7 @@ check[t3] = base[root]
 
 下面是一个求解过程的伪代码，具体的代码实现可以参考 [HanLP中的DoubleArrayTrie](https://github.com/hankcs/HanLP/blob/master/src/main/java/com/hankcs/hanlp/collection/trie/DoubleArrayTrie.java)  
 
-```java
+```
 begin = 0
 pos = max(A.code + 1, nextCheckPos) - 1  # nextCheckPos（初始值为0）每次与根节点的第一个孩子节点比较,此时pos=66
 
@@ -119,7 +120,7 @@ check[t5] = base[A]
 
 求解`begin`的过程：
 
-```java
+```
 begin = 0
  # nextCheckPos每次与根节点的第一个孩子节点比较,上次nextCheckPos=67
  # 所以此时 pos = max(68+1,67)-1 = 68
@@ -178,7 +179,7 @@ check[t8] = base[C]
 
 求解`begin`的过程：
 
-```java
+```
 begin = 0
  # nextCheckPos每次与根节点的第一个孩子节点比较,上次nextCheckPos=70
  # 所以此时 pos = max(0+1,70)-1 = 69
@@ -239,7 +240,7 @@ check[t9] = base[E]
 
 求解`begin`的过程：
 
-```java
+```
 begin = 0
  # nextCheckPos每次与根节点的第一个孩子节点比较,上次nextCheckPos=72
  # 所以此时 pos = max(0+1,72)-1 = 71
