@@ -119,6 +119,8 @@ fail(123)=goto(fail(122),e)=goto(106,e)=107
 
 现在假设有一个字符串`ushers`,如何分词呢？
 
+下面是`HanLP`中的部分[源码](https://github.com/hankcs/HanLP/blob/master/src/main/java/com/hankcs/hanlp/seg/Other/AhoCorasickDoubleArrayTrieSegment.java)：
+
 ```
 /*
 text:[u,s,h,e,r,s]
@@ -165,9 +167,9 @@ for (int i = 0; i < wordNet.length; )//根据wordNet记录的各个词的开始�
         }            
 ```
 
+最后的分词结果就是：`[u, she, r, s ]`
 
 #### 参考文献：
 - [Aho Corasick自动机结合DoubleArrayTrie极速多模式匹配](http://www.hankcs.com/program/algorithm/aho-corasick-double-array-trie.html)
 - [字符串模式匹配算法2 -AC算法](http://www.cnblogs.com/zzqcn/p/3525636.html)
 - [Aho-Corasick算法学习](https://blog.csdn.net/sealyao/article/details/4560427)
-- 
