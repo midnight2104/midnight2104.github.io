@@ -297,7 +297,7 @@ public class BM25
 
 ```
 
-上面的代码知识计算出了`TextRank`中的`w_ij`,接下来就是`TextRank`的实现了：
+上面的代码只是计算出了`TextRank`中的`w_ij`,接下来就是`TextRank`的实现了：
 
 ```java
     //TextRank的具体实现
