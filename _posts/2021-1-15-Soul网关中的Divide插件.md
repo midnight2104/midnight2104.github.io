@@ -16,19 +16,19 @@ tags: Soul
 
 2. 在项目的`pom`文件中引入`soul`相关依赖，当前版本是`2.2.1`。
 
-   ```xml
-           <dependency>
-               <groupId>org.dromara</groupId>
-               <artifactId>soul-spring-boot-starter-client-springmvc</artifactId>
-               <version>${soul.version}</version>
-           </dependency>
-   ```
+```xml
+        <dependency>
+            <groupId>org.dromara</groupId>
+            <artifactId>soul-spring-boot-starter-client-springmvc</artifactId>
+            <version>${soul.version}</version>
+        </dependency>
+```
 
 3. 在需要被代理的接口上使用注解`@SoulSpringMvcClient`，`@SoulSpringMvcClient`注解会把当前接口注册到`soul`网关中。使用方式如下：
 
-   ![1](https://midnight2104.github.io/img/2021-1-15/2.png)
+![1](https://midnight2104.github.io/img/2021-1-15/2.png)
 
-   如果其他接口也想被网关代理，使用方式是一样的，在`@SoulSpringMvcClient`注解中，指定`path`即可。
+如果其他接口也想被网关代理，使用方式是一样的，在`@SoulSpringMvcClient`注解中，指定`path`即可。
 
 4. 参考上一篇的[Soul入门](https://midnight2104.github.io/2021/01/14/Soul%E5%85%A5%E9%97%A8/)，启动`Soul Admin`和`Soul Bootstrap`。`Soul`的后台管理地址，是一个`SpringBoot`项目，只需要修改一下数据库的地址就可以运行了。项目会自动创建对应的库和表。项目启动后的登录地址是`http://localhost:9095/`，用户名是`admin`，密码是`123456`。后台界面如下：
 
@@ -36,7 +36,7 @@ tags: Soul
 
 5. 运行`SoulTestHttpApplication`，启动`soul-examples-http`项目。
 
-6. 三个模块（本身的业务系统，Soul后台管理系统`Soul Admin`，Soul核心网关`Soul Bootstrap`）都启动成功后，就能够进行简单测试了。
+6. 三个系统（本身的业务系统，Soul后台管理系统`Soul Admin`，Soul核心网关`Soul Bootstrap`）都启动成功后，就能够测试一把。
 
 ```sh
 发起一个Get请求： http://localhost:8188/order/findById?id=99 
