@@ -8,13 +8,13 @@ tags: Soul
 
 #### 请求转发
 
-1. `Soul`官方在`soul-examples`模块提供了测试样例，其中的`soul-examples-http`模块演示的通`http`发起请求到`soul`网关，然后再到真实的服务。模块目录及配置信息如下：
+1.`Soul`官方在`soul-examples`模块提供了测试样例，其中的`soul-examples-http`模块演示的通`http`发起请求到`soul`网关，然后再到真实的服务。模块目录及配置信息如下：
 
 ![1](https://midnight2104.github.io/img/2021-1-15/1.png)
 
 ​	`soul.http`是有关`Soul`的配置，`adminUrl`是`Soul`的后台管理地址，`port`是业务系统的端口，`contextPath`是业务系统的请求路径。
 
-2. 在项目的`pom`文件中引入`soul`相关依赖，当前版本是`2.2.1`。
+2.在项目的`pom`文件中引入`soul`相关依赖，当前版本是`2.2.1`。
 
 ```xml
         <dependency>
@@ -24,19 +24,19 @@ tags: Soul
         </dependency>
 ```
 
-3. 在需要被代理的接口上使用注解`@SoulSpringMvcClient`，`@SoulSpringMvcClient`注解会把当前接口注册到`soul`网关中。使用方式如下：
+3.在需要被代理的接口上使用注解`@SoulSpringMvcClient`，`@SoulSpringMvcClient`注解会把当前接口注册到`soul`网关中。使用方式如下：
 
 ![1](https://midnight2104.github.io/img/2021-1-15/2.png)
 
 如果其他接口也想被网关代理，使用方式是一样的，在`@SoulSpringMvcClient`注解中，指定`path`即可。
 
-4. 参考上一篇的[Soul入门](https://midnight2104.github.io/2021/01/14/Soul%E5%85%A5%E9%97%A8/)，启动`Soul Admin`和`Soul Bootstrap`。`Soul`的后台管理地址，是一个`SpringBoot`项目，只需要修改一下数据库的地址就可以运行了。项目会自动创建对应的库和表。项目启动后的登录地址是`http://localhost:9095/`，用户名是`admin`，密码是`123456`。后台界面如下：
+4.参考上一篇的[Soul入门](https://midnight2104.github.io/2021/01/14/Soul%E5%85%A5%E9%97%A8/)，启动`Soul Admin`和`Soul Bootstrap`。`Soul`的后台管理地址，是一个`SpringBoot`项目，只需要修改一下数据库的地址就可以运行了。项目会自动创建对应的库和表。项目启动后的登录地址是`http://localhost:9095/`，用户名是`admin`，密码是`123456`。后台界面如下：
 
 ![1](https://midnight2104.github.io/img/2021-1-15/3.png)
 
-5. 运行`SoulTestHttpApplication`，启动`soul-examples-http`项目。
+5.运行`SoulTestHttpApplication`，启动`soul-examples-http`项目。
 
-6. 三个系统（本身的业务系统，Soul后台管理系统`Soul Admin`，Soul核心网关`Soul Bootstrap`）都启动成功后，就能够测试一把。
+6.三个系统（本身的业务系统，Soul后台管理系统`Soul Admin`，Soul核心网关`Soul Bootstrap`）都启动成功后，就能够测试一把。
 
 ```sh
 发起一个Get请求： http://localhost:8188/order/findById?id=99 
