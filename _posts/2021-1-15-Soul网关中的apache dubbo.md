@@ -74,7 +74,7 @@ tags: Soul
 
 5.三个系统（本身的业务系统(这里就是`soul-examples-apache-dubbo-service`)，`Soul`后台管理系统`Soul Admin`，Soul核心网关`Soul Bootstrap`）都启动成功后，就能够测试一把。
 
-![1](https://midnight2104.github.io/img/2021-1-16/4.png)
+![1](https://midnight2104.github.io/img/2021-1-16/5.png)
 
 ```java
 	 //实际dubbo提供的服务
@@ -93,7 +93,7 @@ tags: Soul
 
 另外也可以发起一个`POST`请求，下面向网关发起了一个请求`http://localhost:9195/dubbo/insert`，实际被调用的是`dubbo`的服务。
 
-![1](https://midnight2104.github.io/img/2021-1-16/4.png)
+![1](https://midnight2104.github.io/img/2021-1-16/6.png)
 
 ```java
    //实际dubbo提供的服务
