@@ -5,20 +5,27 @@ tags: Soul
 ---
 
 本篇文章主要介绍学习使用`sofa`插件，如何将`sofa`服务接入到`Soul`网关，以及`sofa`的简单介绍。主要内容如下：
+
+
+
  - 在`Soul`中使用`sofa`服务
-        -  查看官方样例
-        -  引入依赖
-        -  注册`sofa`服务
-        -  运行`sofa`服务
-        -  启动`Soul Admin`和`Soul Bootstrap`
-        -  体验`sofa`服务
+
+   -   查看官方样例
+   - 引入依赖
+   - 注册`sofa`服务
+   - 运行`sofa`服务
+   - 启动`Soul Admin`和`Soul Bootstrap`
+   - 体验`sofa`服务
  - 关于`sofa`
 
-   -   sofa是什么
+   -   `sofa`是什么
    - `sofa`基本原理
-
  今天体验的是`Soul`中`sofa`插件，如果业务系统是由`sofa`构建而成的，当需要`Soul`网关的支持时，可以将自己的`sofa`服务接入`soul`网关。
+
+
+
  #### 1. 在`Soul`中使用`sofa`服务
+
  ##### 1.1 查看官方样例
   `Soul`官方在`soul-examples`模块提供了测试样例，其中的`soul-examples-sofa`模块演示的是`Soul`网关对`sofa`服务的支持。模块目录及配置信息如下：
 
