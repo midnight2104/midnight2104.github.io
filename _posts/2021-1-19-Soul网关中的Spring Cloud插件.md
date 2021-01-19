@@ -4,128 +4,170 @@ title: Soul网关中的Spring Cloud插件
 tags: Soul
 ---
 
- 今天体验的是`Soul`中`Spring Cloud`插件，如果业务系统是由`Spring Cloud`构建而成的，当需要`Soul`网关的支持时，可以将自己的`Spring Cloud`服务接入`soul`网关。
+本篇文章主要介绍学习使用`Spring Cloud`插件，如何将`Spring Cloud`服务接入到`Soul`网关。主要内容如下：
 
-1.`Soul`官方在`soul-examples`模块提供了测试样例，其中的`soul-examples-springcloud`模块演示的是`Soul`网关对`springcloud`服务的支持。模块目录及配置信息如下：
+ - 在`Soul`中使用`Spring Cloud`服务
+
+   -   查看官方样例
+   - 引入依赖
+   - 注册`Spring Cloud`服务
+   - 运行`Spring Cloud`服务
+   - 启动`Soul Admin`和`Soul Bootstrap`
+   - 体验`Spring Cloud`服务
+
+在前面几篇文章中，已经体验过了`Soul`中`divide`插件，`apache dubbo`插件和`sofa`插件，今天的`spring cloud`插件是最后一篇有关业务服务如何接入`Soul`网关的文章。大体逻辑和之前的一致。
+
+#### 1. 在`Soul`中使用`spring cloud`服务
+
+##### 1.1 查看官方样例
+
+
+
+  `Soul`官方在`soul-examples`模块提供了测试样例，其中的`soul-examples-springcloud`模块演示的是`Soul`网关对`springcloud`服务的支持。模块目录及配置信息如下：
 
 ![1](https://midnight2104.github.io/img/2021-1-19/1.png)
 
-​	`soul.springcloud`是有关`Soul`对`springcloud`插件支持的配置，`adminUrl`是`Soul`的后台管理地址，`contextPath`是业务系统的请求路径上下文。
+有关的配置信息还是和之前一样。在本项目中`Spring Cloud`的注册中心使用的是`nacos`。
 
-2.在`sofa`服务的`pom`文件中引入`soul`相关依赖，当前版本是`2.2.1`。
+> `nacos`可以在官网直接下载，然后解压，在``bin`目录下使用命令`startup.cmd -m standalone`就能启动成功。
+
+```yaml
+
+server:
+  port: 8884
+  address: 0.0.0.0
+
+spring:
+  application:
+    name: springCloud-test
+  cloud: 
+    nacos:
+      discovery:
+          server-addr: 127.0.0.1:8848 # 注册中心nacos的地址
+
+
+springCloud-test:
+  ribbon.NFLoadBalancerRuleClassName: com.netflix.loadbalancer.RandomRule
+
+soul:
+  springcloud:
+    admin-url: http://localhost:9095 # soul-admin的地址
+    context-path: /springcloud
+
+logging:
+  level:
+    root: info
+    org.dromara.soul: debug
+  path: "./logs"
+```
+
+
+
+##### 1.2 引入依赖
+在`spring cloud`服务的`pom`文件中引入`soul`相关依赖，当前版本是`2.2.1`。
+
 
 ```xml
-        <properties>
-            <rpc-sofa-boot-starter.version>6.0.4</rpc-sofa-boot-starter.version>
-        </properties>       
-		<dependency>
-            <groupId>com.alipay.sofa</groupId>
-            <artifactId>rpc-sofa-boot-starter</artifactId>
-            <version>${rpc-sofa-boot-starter.version}</version>
-        </dependency>
- 		<dependency>
+	  <dependency>
             <groupId>org.dromara</groupId>
-            <artifactId>soul-spring-boot-starter-client-sofa</artifactId>
+            <artifactId>soul-spring-boot-starter-client-springcloud</artifactId>
             <version>${soul.version}</version>
-            <exclusions>
-                <exclusion>
-                    <artifactId>guava</artifactId>
-                    <groupId>com.google.guava</groupId>
-                </exclusion>
-            </exclusions>
+        </dependency>
+
+	<!--使用nacos作为注册中心-->
+       <dependency>
+            <groupId>com.alibaba.cloud</groupId>
+            <artifactId>spring-cloud-starter-alibaba-nacos-discovery</artifactId>
+            <version>2.1.0.RELEASE</version>
         </dependency>
 ```
 
-3.在需要被代理的接口上使用注解`@SoulSofaClient`，`@SoulSofaClient`注解会把当前接口注册到`soul`网关中。使用方式如下：
+##### 1.3 注册`spring cloud`服务
+在需要被代理的接口上使用注解`@SoulSpringCloudClient`，`@SoulSpringCloudClient`注解会把当前接口注册到`soul`网关中。使用方式如下：
 
-![1](https://midnight2104.github.io/img/2021-1-18/2.png)
+![1](https://midnight2104.github.io/img/2021-1-19/2.png)
 
-如果其他接口也想被网关代理，使用方式是一样的。在`@SoulSofaClient`注解中，指定`path`即可。
 
-运行`TestSofaApplication`，启动`soul-examples-sofa`项目。`sofa`是需要注册中心的。本文使用的是`zookeeper`，启动也很简单。在官网下载，然后解压，直接运行`zkServer.cmd`就可以运行。
+如果其他接口也想被网关代理，使用方式是一样的。在`@SoulSpringCloudClient`注解中，指定`path`即可。
+##### 1.4 运行`spring cloud`服务
+运行`SoulTestSpringCloudApplication`，启动`soul-examples-springcloud`项目。成功启动后，可以在控制台看见接口被成功注册到`soul`网关中。
 
-![1](https://midnight2104.github.io/img/2021-1-18/3.png)
+![1](https://midnight2104.github.io/img/2021-1-19/3.png)
 
-4.参考上一篇的[Soul入门](https://midnight2104.github.io/2021/01/14/Soul%E5%85%A5%E9%97%A8/)，启动`Soul Admin`和`Soul Bootstrap`。`Soul`的后台界面如下：
+##### 1.5 启动`Soul Admin`和`Soul Bootstrap`
+参考上一篇的[Soul入门](https://midnight2104.github.io/2021/01/14/Soul%E5%85%A5%E9%97%A8/)，启动`Soul Admin`和`Soul Bootstrap`。`Soul`的后台界面如下：
 
-![1](https://midnight2104.github.io/img/2021-1-18/4.png)
 
-如果`sofa`插件没有开启，需要手动在管理界面开启一下。
+![1](https://midnight2104.github.io/img/2021-1-19/4.png)
 
-![1](https://midnight2104.github.io/img/2021-1-18/5.png)
+如果`spring cloud`插件没有开启，需要手动在管理界面开启一下。
+
+![1](https://midnight2104.github.io/img/2021-1-19/5.png)
 
 在`Soul Bootstrap`中，加入相关依赖：
 
 ```xml
- 	<!--soul sofa plugin start-->
+         <dependency>
+            <groupId>org.dromara</groupId>
+            <artifactId>soul-spring-boot-starter-plugin-httpclient</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+	 <!--soul springCloud plugin start-->
         <dependency>
-           <groupId>com.alipay.sofa</groupId>
-           <artifactId>sofa-rpc-all</artifactId>
-           <version>5.7.6</version>
-       </dependency>
-       <dependency>
-           <groupId>org.apache.curator</groupId>
-           <artifactId>curator-client</artifactId>
-           <version>4.0.1</version>
-       </dependency>
-       <dependency>
-           <groupId>org.apache.curator</groupId>
-           <artifactId>curator-framework</artifactId>
-           <version>4.0.1</version>
-       </dependency>
-       <dependency>
-           <groupId>org.apache.curator</groupId>
-           <artifactId>curator-recipes</artifactId>
-           <version>4.0.1</version>
-       </dependency>
-       <dependency>
-           <groupId>org.dromara</groupId>
-           <artifactId>soul-spring-boot-starter-plugin-sofa</artifactId>
-                <!-- 当前版本是2.2.1-->
-           <version>${project.version}</version>
-       </dependency>
-     <!-- soul  sofa plugin end-->
+            <groupId>org.dromara</groupId>
+            <artifactId>soul-spring-boot-starter-plugin-springcloud</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-commons</artifactId>
+            <version>2.2.0.RELEASE</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-netflix-ribbon</artifactId>
+            <version>2.2.0.RELEASE</version>
+        </dependency>
+
+        <!--soul springCloud plugin start end-->
+
 ```
 
-5.三个系统（本身的业务系统(这里就是`soul-examples-sofa`)，`Soul`后台管理系统`Soul Admin`，Soul核心网关`Soul Bootstrap`）都启动成功后，就能够体验到`sofa`服务在网关`soul`中的接入。
+`httpclient`插件也是需要的，在`soul`网关将`http`协议转换为`spring cloud`协议后，还需要通过`httpclient`插件发起`web mvc`请求。
 
-![1](https://midnight2104.github.io/img/2021-1-18/sofa.png)
+##### 1.6 体验`spring cloud`服务
+
+三个系统（本身的业务系统(这里就是`soul-examples-sofa`)，`Soul`后台管理系统`Soul Admin`，Soul核心网关`Soul Bootstrap`）都启动成功后，就能够体验到`sofa`服务在网关`soul`中的接入。
+
+- 先直连`spring cloud`服务
+
+![1](https://midnight2104.github.io/img/2021-1-19/6.png)
+
+- 再通过`Soul`网关请求`spring cloud`服务
+
+![1](https://midnight2104.github.io/img/2021-1-19/7.png)
+
+
 
 ```java
-	 //实际sofa提供的服务
-    @SoulSofaClient(path = "/findAll", desc = "Get all data")
-    public DubboTest findAll() {
-        DubboTest dubboTest = new DubboTest();
-        dubboTest.setName("hello world Soul Sofa , findAll");
-        dubboTest.setId(String.valueOf(new Random().nextInt()));
-        return dubboTest;
+	 //实际spring cloud提供的服务
+    @GetMapping("/findById")
+    @SoulSpringCloudClient(path = "/findById")
+    public OrderDTO findById(@RequestParam("id") final String id) {
+        OrderDTO orderDTO = new OrderDTO();
+        orderDTO.setId(id);
+        orderDTO.setName("hello world spring cloud findById");
+        return orderDTO;
     }
 ```
 
 
 
-上面向网关发起了一个请求`http://localhost:9195/sofa/findAll`，实际被调用的是`sofa`的服务。
-
-#### 关于`sofa`
-
-> `SOFARPC` 是蚂蚁金服开源的一款基于 `Java` 实现的 `RPC` 服务框架，为应用之间提供远程服务调用能力，具有高可伸缩性，高容错性，目前蚂蚁金服所有的业务的相互间的 `RPC` 调用都是采用 `SOFARPC`。`SOFARPC` 为用户提供了负载均衡，流量转发，链路追踪，链路数据透传，故障剔除等功能。
->
-> `SOFARPC` 还支持不同的协议，目前包括 [bolt](https://www.sofastack.tech/projects/sofa-rpc/bolt)，[RESTful](https://www.sofastack.tech/projects/sofa-rpc/restful)，[dubbo](https://www.sofastack.tech/projects/sofa-rpc/dubbo)，[H2C](https://www.sofastack.tech/projects/sofa-rpc/h2c) 协议进行通信。其中` bolt` 是蚂蚁金融服务集团开放的基于 Netty 开发的网络通信框架。
-
-##### `sofa`基本原理
-
-![1](https://midnight2104.github.io/img/2021-1-18/6.png)
-
-1. 当一个 `SOFARPC `的应用启动的时候，如果发现当前应用需要发布` RPC `服务的话，那么 `SOFARPC `会将这些服务注册到服务注册中心上。如图中 `Service` 指向 `Registry`。
-2. 当引用这个服务的 `SOFARPC `应用启动时，会从服务注册中心订阅到相应服务的元数据信息。服务注册中心收到订阅请求后，会将发布方的元数据列表实时推送给服务引用方。如图中` Registry `指向 `Reference`。
-3. 当服务引用方拿到地址以后，就可以从中选取地址发起调用了。如图中 `Reference` 指向 `Service`。
-
-最后，这篇文章主要介绍了`Soul`对`sofa`提供的支持，结合实际案例进行了演示。
+上面演示的是先通过请求`http://localhost:8884/order/findById?id=99`直连`spring cloud`服务。再通过`Soul`网关发起请求`http://localhost:9195/springcloud/order/findById?id=99`，实际被调用的是`spring cloud`的服务。
 
 
 
-参考地址：
+最后，这篇文章主要介绍了`Soul`对`spring cloud`提供的支持，结合实际案例进行了演示。至此，不同业务系统如何接入`Soul`网关就已经演示完了。其他的插件（比如：`waf`/`sign`/`rate limiter`等等）是`Soul`作为一个网关所提供的功能（防火墙，签名认证，限流等等）
 
-- [SOFARPC 介绍](https://www.sofastack.tech/projects/sofa-rpc/overview/)
-- [sofa用户接入soul](https://dromara.org/zh-cn/docs/soul/user-sofa.html)
-
+接下来，将要分析的是`Soul`是如何完成数据同步的？在`soul-admin`的后台管理中修改了插件，选择器或规则，是如何将这些信息同步到网关的呢？敬请期待~
