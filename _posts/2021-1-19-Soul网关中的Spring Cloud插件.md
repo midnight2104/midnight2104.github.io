@@ -136,6 +136,10 @@ logging:
 
 `httpclient`插件也是需要的，在`soul`网关将`http`协议转换为`spring cloud`协议后，还需要通过`httpclient`插件发起`web mvc`请求。
 
+提一句，当`spring cloud`服务和`soul-bootstrap`等启动成功后，可以在注册中心看到这两个服务实例。
+
+![1](https://midnight2104.github.io/img/2021-1-19/8.png)
+
 ##### 1.6 体验`spring cloud`服务
 
 三个系统（本身的业务系统(这里就是`soul-examples-sofa`)，`Soul`后台管理系统`Soul Admin`，Soul核心网关`Soul Bootstrap`）都启动成功后，就能够体验到`sofa`服务在网关`soul`中的接入。
