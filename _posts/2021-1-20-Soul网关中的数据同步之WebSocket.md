@@ -133,7 +133,7 @@ public class DataChangedEventDispatcher implements ApplicationListener<DataChang
 
 
 
-![1](https://midnight2104.github.io/img/2021-1-20/2.png)
+<img src="https://midnight2104.github.io/img/2021-1-20/3.png" alt="1" style="zoom:50%;" />
 
 
 
@@ -231,7 +231,7 @@ public class WebsocketDataHandler {
 
 根据传入的数据类型，使用对应的`Handler`去处理，比如，我们修改的是规则信息，所以这里会调用`RuleDataHandler`来处理。跟踪进去后，发现`RuleDataHandler`继承了`AbstractDataHandler`类，其他几种数据类型也继承了该类。
 
-![1](https://midnight2104.github.io/img/2021-1-20/2.png)
+<img src="https://midnight2104.github.io/img/2021-1-20/4.png" alt="1" style="zoom:50%;" />
 
 通过源码发现，这里运用了`模板方法`的设计模式。定义好了通用的方法`handle()`，其他方法都是抽象方法，由子类去实现。在`handle()`方法中通过`switch / case`表达式去匹配操作类型，然后执行实际的方法。
 
