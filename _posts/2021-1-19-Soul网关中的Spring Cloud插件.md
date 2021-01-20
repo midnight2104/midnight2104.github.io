@@ -29,7 +29,7 @@ tags: Soul
 
 有关的配置信息还是和之前一样。在本项目中`Spring Cloud`的注册中心使用的是`nacos`。
 
-> `nacos`可以在官网直接下载，然后解压，在``bin`目录下使用命令`startup.cmd -m standalone`就能启动成功。
+> `nacos`可以在官网直接下载，然后解压，在`bin`目录下使用命令`startup.cmd -m standalone`就能启动成功。
 
 ```yaml
 
