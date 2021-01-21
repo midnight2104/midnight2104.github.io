@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Soul网关中的数据同步之ZoomKeeper
+title: Soul网关中的数据同步之ZooKeeper
 tags: Soul
 ---
 
