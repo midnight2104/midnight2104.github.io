@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Soul网关中的sofa插件
+title: Soul网关中的Sofa插件
 tags: Soul
 ---
 
@@ -21,7 +21,7 @@ tags: Soul
    - `sofa`是什么
 
    - `sofa`基本原理
-    
+   
     
 
 

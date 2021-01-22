@@ -1,14 +1,12 @@
 ---
 layout: post
-title: Soul网关中的数据同步之ZooKeeper
+title: Soul网关中的数据同步之Nacos
 tags: Soul
 ---
 
 
 
-在上一篇文章中，跟踪了基于`WebSocket`的数据同步原理，本篇文件将要跟踪基于`ZoomKeeper`的数据同步原理。
-
-> - 基于 zookeeper 的同步原理很简单，主要是依赖 `zookeeper` 的 watch 机制，`soul-web` 会监听配置的节点，`soul-admin` 在启动的时候，会将数据全量写入 `zookeeper`，后续数据发生变更时，会增量更新 `zookeeper` 的节点，与此同时，`soul-web` 会监听配置信息的节点，一旦有信息变更时，会更新本地缓存。
+在上一篇文章中，跟踪了基于`ZooKeeper`的数据同步原理，本篇文件将要跟踪基于`Nacos`的数据同步原理。
 
 同步的核心逻辑是：在`soul-admin`后台修改数据，先保存到数据库；然后将修改的信息通过同步策略发送到`soul`网关；由网关处理后，保存在`soul`网关内存；使用时，从网关内存获取数据。
 
@@ -23,7 +21,7 @@ tags: Soul
 
 ##### 1. 修改规则
 
-在演示案例之前，配置一下`soul-admin`端的数据同步方式为`ZooKeeper`（`ZooKeeper`的启动和安装请参考前面的文章）:
+在演示案例之前，将`soul-admin`的数据同步方式配置为`nacos`（`nacos`的启动方式：`nacos-server-2.0.0-ALPHA.2\nacos\bin>startup.cmd -m standalone`）:
 
 ```yaml
 soul:
@@ -34,13 +32,24 @@ soul:
   sync:
 #    websocket:
 #      enabled: true
-      zookeeper:
-          url: localhost:2181
-          sessionTimeout: 5000
-          connectionTimeout: 2000
+#      zookeeper:
+#          url: localhost:2181
+#          sessionTimeout: 5000
+#          connectionTimeout: 2000
+#      http:
+#        enabled: true
+      nacos:
+        url: localhost:8848
+        namespace: 1c10d748-af86-43b9-8265-75f487d20c6c
+        acm:
+          enabled: false
+          endpoint: acm.aliyun.com
+          namespace:
+          accessKey:
+          secretKey:
 ```
 
-在`soul-bootstrap`也配置一下数据同步方式为`ZooKeeper`:
+在`soul-bootstrap`也配置一下数据同步方式为`nacos`:
 
 ```yaml
 soul :
@@ -54,17 +63,28 @@ soul :
 #        websocket :
 #             urls: ws://localhost:9095/websocket
 
-        zookeeper:
-             url: localhost:2181
-             sessionTimeout: 5000
-             connectionTimeout: 2000
+#        zookeeper:
+#             url: localhost:2181
+#             sessionTimeout: 5000
+#             connectionTimeout: 2000
+#        http:
+#             url : http://localhost:9095
+        nacos:
+              url: localhost:8848
+              namespace: 1c10d748-af86-43b9-8265-75f487d20c6c
+              acm:
+                enabled: false
+                endpoint: acm.aliyun.com
+                namespace:
+                accessKey:
+                secretKey:
 ```
 
 
 
-现在，我们以一个实际调用过程为例，比如在`Soul`网关管理系统中，对选择器的配置信息进行修改：查询条件中`id=100`才能匹配成功。具体信息如下所示：
+现在，我们以一个实际调用过程为例，比如在`Soul`网关管理系统中，对选择器的配置信息进行修改：查询条件中`id=99`才能匹配成功。具体信息如下所示：
 
-![1](https://midnight2104.github.io/img/2021-1-21/1.png)
+<img src="https://midnight2104.github.io/img/2021-1-22/3.png" alt="1" style="zoom:80%;" />
 
 点击确认后，进入到`soul-admin`的`updateSelector()`这个接口。
 
@@ -156,7 +176,7 @@ public class DataChangedEventDispatcher implements ApplicationListener<DataChang
 
 
 
->  注意一下，这个`DataChangedEventDispatcher`还实现了`InitializingBean`接口，并重写了它的`afterPropertiesSet()`方法，做的事情是：在`bean`初始化的时候，将实现`DataChangedListener`接口的`bean`加载进来。通过查看源码，可以看到4种数据同步的方式都实现了该接口，其中就有我们这次使用的`ZooKeeper`数据同步方式。
+>  注意一下，这个`DataChangedEventDispatcher`还实现了`InitializingBean`接口，并重写了它的`afterPropertiesSet()`方法，做的事情是：在`bean`初始化的时候，将实现`DataChangedListener`接口的`bean`加载进来。通过查看源码，可以看到4种数据同步的方式都实现了该接口，其中就有我们这次使用的`Nacos`数据同步方式。
 
 
 
@@ -166,39 +186,47 @@ public class DataChangedEventDispatcher implements ApplicationListener<DataChang
 
 当监听器监听到有事件发布后，会执行`onApplicationEvent()`方法，这里面的逻辑是循环处理`DataChangedListener`，通过`switch / case`表达式匹配修改的是什么类型信息，我们这里修改的是选择器，所以会匹配到`listener.onSelectorChanged()`这个方法。（这里虽然用了循环的方式处理每一个`listener`，但在实际中我们只需要一种数据同步方式就好。）
 
- 本次使用的是`ZooKeeper`进行数据同步，所以`listener.onSelectorChanged()`的实际执行方法是`ZookeeperDataChangedListener中的onSelectorChanged`。这里面做的事情是：
+ 本次使用的是`Nacos`进行数据同步，所以`listener.onSelectorChanged()`的实际执行方法是`NacosDataChangedListener#onSelectorChanged`。这里面做的事情是：
 
-- 1.构建路径用于存放变更数据；
-- 2.更新数据到`ZooKeeper`。
+- 1.更新选择器信息；
+- 2.发布更新的配置信息。
 
 ```java
 
 public void onSelectorChanged(final List<SelectorData> changed, final DataEventTypeEnum eventType) {
-        
-        for (SelectorData data : changed) {
-            //构建路径
-            final String selectorRealPath = ZkPathConstants.buildSelectorRealPath(data.getPluginName(), data.getId());
-
-            //省略了其他代码......
-            
-            final String selectorParentPath = ZkPathConstants.buildSelectorParentPath(data.getPluginName());
-			
-            //更新数据到ZooKeeper
-            upsertZkNode(selectorRealPath, data);
+        updateSelectorMap(getConfig(SELECTOR_DATA_ID));
+        switch (eventType) {
+            case DELETE:
+                //省略了其他代码
+            case REFRESH:
+            case MYSELF:
+			//省略了其他代码
+            default:
+                changed.forEach(selector -> {
+                    //更新选择器信息
+                    List<SelectorData> ls = SELECTOR_MAP
+                            .getOrDefault(selector.getPluginName(), new ArrayList<>())
+                            .stream()
+                            .filter(s -> !s.getId().equals(selector.getId()))
+                            .sorted(SELECTOR_DATA_COMPARATOR)
+                            .collect(Collectors.toList());
+                    ls.add(selector);
+                    SELECTOR_MAP.put(selector.getPluginName(), ls);
+                });
+                break;
         }
+    	//发布更新的配置信息
+        publishConfig(SELECTOR_DATA_ID, SELECTOR_MAP);
     }
 ```
 
-真正更新数据的操作是通过` zkClient.writeData()`完成。
+真正更新数据的操作是通过`configService.publishConfig()`完成。`configService`在程序启动的时候会注册为`NacosConfigService`。
 
 ```java
 
-	//真正更新数据的操作是通过 zkClient.writeData()完成
-    private void upsertZkNode(final String path, final Object data) {
-        if (!zkClient.exists(path)) {
-            zkClient.createPersistent(path, true);
-        }
-        zkClient.writeData(path, data);
+	//真正更新数据的操作是通过 configService.publishConfig()完成
+    private void publishConfig(final String dataId, final Object data) {
+        configService.publishConfig(dataId, GROUP, GsonUtils.getInstance().toJson(data));
     }
 ```
 
@@ -206,32 +234,41 @@ public void onSelectorChanged(final List<SelectorData> changed, final DataEventT
 
 ##### 3.接收数据
 
-在`Soul`网关中，接受数据的操作也是通过`zkClient`进行订阅变更。通过` zkClient.subscribeDataChanges()`向`ZooKeeper`订阅变更的数据，然后去处理。
+在`Soul`网关中，接收数据的操作是通过`nacos`进行监听的。通过` com.alibaba.nacos.api.config.listener.Listener#receiveConfigInfo`来接收配置信息，然后去处理。
 
 ```java
-public class ZookeeperSyncDataService implements SyncDataService, AutoCloseable {
-    	//省略了其他代码......
-       
-    private void subscribeSelectorDataChanges(final String path) {
-        //订阅数据变更
-        zkClient.subscribeDataChanges(path, new IZkDataListener() {
+public class NacosCacheHandler {
+    		//省略了其他代码
+protected void watcherData(final String dataId, final OnChange oc) {
+        Listener listener = new Listener() {
+            //接收配置信息
             @Override
-            public void handleDataChange(final String dataPath, final Object data) {
-                //处理数据
-                cacheSelectorData((SelectorData) data);
+            public void receiveConfigInfo(final String configInfo) {
+                oc.change(configInfo);
             }
 
             @Override
-            public void handleDataDeleted(final String dataPath) {
-                unCacheSelectorData(dataPath);
+            public Executor getExecutor() {
+                return null;
             }
-        });
+        };
+        oc.change(getConfigAndSignListener(dataId, listener));
+        LISTENERS.getOrDefault(dataId, new ArrayList<>()).add(listener);
     }
-      
-    //处理数据
-    private void cacheSelectorData(final SelectorData selectorData) {
-        Optional.ofNullable(selectorData)
-                .ifPresent(data -> Optional.ofNullable(pluginDataSubscriber).ifPresent(e -> e.onSelectorSubscribe(data)));
+
+protected void updateSelectorMap(final String configInfo) {
+        try {
+            if(StringUtils.isEmpty(configInfo)){
+                return;
+            }
+            List<SelectorData> selectorDataList = GsonUtils.getInstance().toObjectMapList(configInfo, SelectorData.class).values().stream().flatMap(Collection::stream).collect(Collectors.toList());
+            selectorDataList.forEach(selectorData -> Optional.ofNullable(pluginDataSubscriber).ifPresent(subscriber -> {
+                subscriber.unSelectorSubscribe(selectorData); //订阅者删除之前的选择器配置信息
+                subscriber.onSelectorSubscribe(selectorData); //订阅者保存当前的选择器配置信息
+            }));
+        } catch (JsonParseException e) {
+            log.error("sync selector data have error:", e);
+        }
     }
 }
 ```
@@ -247,21 +284,18 @@ public class CommonPluginDataSubscriber implements PluginDataSubscriber {
    private <T> void subscribeDataHandler(final T classData, final DataEventTypeEnum dataType) {
         Optional.ofNullable(classData).ifPresent(data -> {
             if (data instanceof PluginData) {
-                PluginData pluginData = (PluginData) data;
-                if (dataType == DataEventTypeEnum.UPDATE) {
-                     //省略了其他代码
-                }
-            } else if (data instanceof SelectorData) {
+  				//省略处理插件的逻辑
+            } else if (data instanceof SelectorData) { //处理选择器信息
                 SelectorData selectorData = (SelectorData) data;
-                if (dataType == DataEventTypeEnum.UPDATE) {
-                    //更新网关内存中缓存的信息
+                if (dataType == DataEventTypeEnum.UPDATE) { //更新操作
                     BaseDataCache.getInstance().cacheSelectData(selectorData);
-                   //更新部分插件信息 Optional.ofNullable(handlerMap.get(selectorData.getPluginName())).ifPresent(handler -> handler.handlerSelector(selectorData));
-                } 
+                    Optional.ofNullable(handlerMap.get(selectorData.getPluginName())).ifPresent(handler -> handler.handlerSelector(selectorData));
+                } else if (dataType == DataEventTypeEnum.DELETE) { //删除操作
+                    BaseDataCache.getInstance().removeSelectData(selectorData);
+                    Optional.ofNullable(handlerMap.get(selectorData.getPluginName())).ifPresent(handler -> handler.removeSelector(selectorData));
                 }
             } else if (data instanceof RuleData) {
-               //省略了其他代码
-                }
+                //省略处理规则的逻辑
             }
         });
     }
@@ -303,7 +337,7 @@ public final class BaseDataCache {
 
 
 
-分析到这里，基于`ZooKeeper`数据同步的工作就算完成了。核心逻辑就是就更新的信息放到网关的内存中，使用时再去内存中拿，所以`Soul`网关的效率是很高的。
+分析到这里，基于`nacos`数据同步的工作就算完成了。核心逻辑就是就更新的信息放到网关的内存中，使用时再去内存中拿，所以`Soul`网关的效率是很高的。
 
 
 
@@ -311,7 +345,7 @@ public final class BaseDataCache {
 
 选择器信息完成更新后，通过`http`去访问`soul`网关，这里以`divide`插件为例。关于`divide`插件的使用请参考之前的文章。
 
-发起一个`GET`请求：`http://localhost:9195/http/order/findById?id=1`，代码会执行到下面这个位置：
+发起一个`GET`请求：`http://localhost:9195/http/order/findById?id=100`，代码会执行到下面这个位置：
 
 ```java
 # org.dromara.soul.plugin.base.AbstractSoulPlugin#execute
@@ -346,7 +380,7 @@ public final class BaseDataCache {
 }
 ```
 
-刚才，我们发起的请求：`http://localhost:9195/http/order/findById?id=1`，是匹配不到选择器的：
+刚才，我们发起的请求：`http://localhost:9195/http/order/findById?id=100`，是匹配不到选择器的：
 
 ```sh
 {
@@ -356,18 +390,18 @@ public final class BaseDataCache {
 }
 ```
 
-因为，在开始的时候，更新了选择器的配置：查询条件中`id=100`才能匹配成功。
+因为，在开始的时候，更新了选择器的配置：查询条件中`id=99`才能匹配成功。
 
-所以，我们另外再发起一个`id=100`请求：`http://localhost:9195/http/order/findById?id=100`，就可以成功了。
+所以，我们另外再发起一个`id=100`请求：`http://localhost:9195/http/order/findById?id=99`，就可以成功了。
 
 ```sh
 
 {
-    "id": "100",
+    "id": "99",
     "name": "hello world findById"
 }
 ```
 
 
 
-最后，本文通过源码的方式跟踪了`Soul`网关是如何通过`ZooKeeper`完成数据同步的：数据修改后，通过`Spring`发布修改事件，由`zkClient`发送数据。在网关层也有`zkClient`订阅变更的数据，然后进行处理数据，最后将数据保存到网关内存。
+最后，本文通过源码的方式跟踪了`Soul`网关是如何通过`Nacos`完成数据同步的：数据修改后，通过`Spring`发布修改事件，由`NacosConfigService`发送数据。在网关层有`Listener`接收变更的配置数据，然后进行处理数据，最后将数据保存到网关内存。

@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Soul网关中的divide插件
+title: Soul网关中的Divide插件
 tags: Soul
 ---
 

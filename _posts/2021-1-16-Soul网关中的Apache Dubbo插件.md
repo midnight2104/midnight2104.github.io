@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Soul网关中的apache dubbo插件
+title: Soul网关中的Apache Dubbo插件
 tags: Soul
 ---
 
