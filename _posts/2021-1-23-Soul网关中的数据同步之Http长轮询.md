@@ -1,14 +1,18 @@
 ---
 layout: post
-title: Soul网关中的数据同步之Nacos
+title: Soul网关中的数据同步之Http长轮询
 tags: Soul
 ---
 
 
 
-在上一篇文章中，跟踪了基于`ZooKeeper`的数据同步原理，本篇文件将要跟踪基于`Nacos`的数据同步原理。
+在上一篇文章中，跟踪了基于`Nacos`的数据同步原理，本篇文章将要跟踪基于`Http长轮询`的数据同步原理。
 
-同步的核心逻辑是：在`soul-admin`后台修改数据，先保存到数据库；然后将修改的信息通过同步策略发送到`soul`网关；由网关处理后，保存在`soul`网关内存；使用时，从网关内存获取数据。
+> 如果是 `http` 同步策略，`soul-web` 主动发起长轮询请求，默认有 `90s` 超时时间，如果 `soul-admin` 没有数据变更，则会阻塞 `http` 请求，如果有数据发生变更则响应变更的数据信息，如果超过 60s 仍然没有数据变更则响应空数据，网关层接到响应后，继续发起`http`请求，反复同样的请求。
+
+
+
+同步的核心逻辑是：在`soul-admin`后台修改数据，先保存到数据库，然后保存到`soul-admin`的内存；在网关有定时任务执行，即发起长轮询，发起`http`请求到`soul-admin`去获取变更的数据。
 
 本文的分析是想通过跟踪源码的方式来理解同步的核心逻辑，数据同步分析步骤如下：
 
@@ -21,7 +25,7 @@ tags: Soul
 
 ##### 1. 修改选择器
 
-在演示案例之前，将`soul-admin`的数据同步方式配置为`nacos`（`nacos`的启动方式：`nacos-server-2.0.0-ALPHA.2\nacos\bin>startup.cmd -m standalone`）:
+在演示案例之前，将`soul-admin`的数据同步方式配置为`http`:
 
 ```yaml
 soul:
@@ -36,20 +40,11 @@ soul:
 #          url: localhost:2181
 #          sessionTimeout: 5000
 #          connectionTimeout: 2000
-#      http:
-#        enabled: true
-      nacos:
-        url: localhost:8848
-        namespace: 1c10d748-af86-43b9-8265-75f487d20c6c
-        acm:
-          enabled: false
-          endpoint: acm.aliyun.com
-          namespace:
-          accessKey:
-          secretKey:
+      http:
+        enabled: true
 ```
 
-在`soul-bootstrap`也配置一下数据同步方式为`nacos`:
+在`soul-bootstrap`也配置一下数据同步方式为`http`:
 
 ```yaml
 soul :
@@ -67,24 +62,15 @@ soul :
 #             url: localhost:2181
 #             sessionTimeout: 5000
 #             connectionTimeout: 2000
-#        http:
-#             url : http://localhost:9095
-        nacos:
-              url: localhost:8848
-              namespace: 1c10d748-af86-43b9-8265-75f487d20c6c
-              acm:
-                enabled: false
-                endpoint: acm.aliyun.com
-                namespace:
-                accessKey:
-                secretKey:
+        http:
+             url : http://localhost:9095
 ```
 
 
 
 现在，我们以一个实际调用过程为例，比如在`Soul`网关管理系统中，对选择器的配置信息进行修改：查询条件中`id=99`才能匹配成功。具体信息如下所示：
 
-![](https://midnight2104.github.io/img/2021-1-22/1.png)
+![](https://midnight2104.github.io/img/2021-1-23/1.png)
 
 点击确认后，进入到`soul-admin`的`updateSelector()`这个接口。
 
@@ -186,47 +172,85 @@ public class DataChangedEventDispatcher implements ApplicationListener<DataChang
 
 当监听器监听到有事件发布后，会执行`onApplicationEvent()`方法，这里面的逻辑是循环处理`DataChangedListener`，通过`switch / case`表达式匹配修改的是什么类型信息，我们这里修改的是选择器，所以会匹配到`listener.onSelectorChanged()`这个方法。（这里虽然用了循环的方式处理每一个`listener`，但在实际中我们只需要一种数据同步方式就好。）
 
- 本次使用的是`Nacos`进行数据同步，所以`listener.onSelectorChanged()`的实际执行方法是`NacosDataChangedListener#onSelectorChanged`。这里面做的事情是：
+ 本次使用的是`http长轮询`进行数据同步，所以`listener.onSelectorChanged()`的实际执行方法是`HttpLongPollingDataChangedListener#onSelectorChanged`，它继承了`AbstractDataChangedListener`。这里面做的事情是：
 
-- 1.更新选择器信息；
-- 2.发布更新的配置信息。
+- 1.更新选择器信息到缓存；
+- 2.设置响应。
 
 ```java
 
-public void onSelectorChanged(final List<SelectorData> changed, final DataEventTypeEnum eventType) {
-        updateSelectorMap(getConfig(SELECTOR_DATA_ID));
-        switch (eventType) {
-            case DELETE:
-                //省略了其他代码
-            case REFRESH:
-            case MYSELF:
-			//省略了其他代码
-            default:
-                changed.forEach(selector -> {
-                    //更新选择器信息
-                    List<SelectorData> ls = SELECTOR_MAP
-                            .getOrDefault(selector.getPluginName(), new ArrayList<>())
-                            .stream()
-                            .filter(s -> !s.getId().equals(selector.getId()))
-                            .sorted(SELECTOR_DATA_COMPARATOR)
-                            .collect(Collectors.toList());
-                    ls.add(selector);
-                    SELECTOR_MAP.put(selector.getPluginName(), ls);
-                });
-                break;
+    public void onSelectorChanged(final List<SelectorData> changed, final DataEventTypeEnum eventType) {
+        if (CollectionUtils.isEmpty(changed)) {
+            return;
         }
-    	//发布更新的配置信息
-        publishConfig(SELECTOR_DATA_ID, SELECTOR_MAP);
+        //更新选择器信息到缓存
+        this.updateSelectorCache();
+        //设置响应
+        this.afterSelectorChanged(changed, eventType);
+    }
+
+```
+
+真正更新数据的操作是通过`updateCache`完成，将新的数据放到`CACHE`中，这个`CACHE`是`ConcurrentMap`类型。网关有定时任务来这个`CACHE`里获取数据。
+
+```java
+ 	 //更新选择器信息到缓存
+    protected void updateSelectorCache() {
+        this.updateCache(ConfigGroupEnum.SELECTOR, selectorService.listAll());
+    }
+
+    protected <T> void updateCache(final ConfigGroupEnum group, final List<T> data) {
+        String json = GsonUtils.getInstance().toJson(data);
+        ConfigDataCache newVal = new ConfigDataCache(group.name(), json, Md5Utils.md5(json), System.currentTimeMillis());
+        //更新新的数据
+        ConfigDataCache oldVal = CACHE.put(newVal.getGroup(), newVal);
+        log.info("update config cache[{}], old: {}, updated: {}", group, oldVal, newVal);
     }
 ```
 
-真正更新数据的操作是通过`configService.publishConfig()`完成。`configService`在程序启动的时候会注册为`NacosConfigService`。
+设置响应的过程是在定时任务中完成的。
 
 ```java
+//scheduler 是个定时任务  
+@Override
+    protected void afterSelectorChanged(final List<SelectorData> changed, final DataEventTypeEnum eventType) {
+        scheduler.execute(new DataChangeTask(ConfigGroupEnum.SELECTOR));
+    }
 
-	//真正更新数据的操作是通过 configService.publishConfig()完成
-    private void publishConfig(final String dataId, final Object data) {
-        configService.publishConfig(dataId, GROUP, GsonUtils.getInstance().toJson(data));
+//定时任务  
+    class DataChangeTask implements Runnable {
+		//省略其他代码
+
+        @Override
+        public void run() {
+            for (Iterator<LongPollingClient> iter = clients.iterator(); iter.hasNext();) {
+                LongPollingClient client = iter.next();
+                iter.remove();
+                client.sendResponse(Collections.singletonList(groupKey));
+                //省略其他代码
+            }
+        }
+    }
+
+	//发送响应
+    void sendResponse(final List<ConfigGroupEnum> changedGroups) {
+			//省略其他代码
+            generateResponse((HttpServletResponse) asyncContext.getResponse(), changedGroups);
+            asyncContext.complete();
+        }
+
+	//产生响应
+    private void generateResponse(final HttpServletResponse response, final List<ConfigGroupEnum> changedGroups) {
+        try {
+            response.setHeader("Pragma", "no-cache");
+            response.setDateHeader("Expires", 0);
+            response.setHeader("Cache-Control", "no-cache,no-store");
+            response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+            response.setStatus(HttpServletResponse.SC_OK);
+            response.getWriter().println(GsonUtils.getInstance().toJson(SoulAdminResult.success(SoulResultMessage.SUCCESS, changedGroups)));
+        } catch (IOException ex) {
+            log.error("Sending response failed.", ex);
+        }
     }
 ```
 
@@ -234,46 +258,92 @@ public void onSelectorChanged(final List<SelectorData> changed, final DataEventT
 
 ##### 3.接收数据
 
-在`Soul`网关中，接收数据的操作是通过`nacos`进行监听的。通过` com.alibaba.nacos.api.config.listener.Listener#receiveConfigInfo`来接收配置信息，然后去处理。
+在`Soul`网关中，接收数据的操作是主动通过`http长轮询`发起`http`请求到`soul-admin`获取数据。处理逻辑在`org.dromara.soul.sync.data.http.HttpSyncDataService`类中，`Soul`网关启动时就会执行。
 
 ```java
-public class NacosCacheHandler {
-    		//省略了其他代码
-protected void watcherData(final String dataId, final OnChange oc) {
-        Listener listener = new Listener() {
-            //接收配置信息
-            @Override
-            public void receiveConfigInfo(final String configInfo) {
-                oc.change(configInfo);
-            }
-
-            @Override
-            public Executor getExecutor() {
-                return null;
-            }
-        };
-        oc.change(getConfigAndSignListener(dataId, listener));
-        LISTENERS.getOrDefault(dataId, new ArrayList<>()).add(listener);
-    }
-
-protected void updateSelectorMap(final String configInfo) {
-        try {
-            if(StringUtils.isEmpty(configInfo)){
-                return;
-            }
-            List<SelectorData> selectorDataList = GsonUtils.getInstance().toObjectMapList(configInfo, SelectorData.class).values().stream().flatMap(Collection::stream).collect(Collectors.toList());
-            selectorDataList.forEach(selectorData -> Optional.ofNullable(pluginDataSubscriber).ifPresent(subscriber -> {
-                subscriber.unSelectorSubscribe(selectorData); //订阅者删除之前的选择器配置信息
-                subscriber.onSelectorSubscribe(selectorData); //订阅者保存当前的选择器配置信息
-            }));
-        } catch (JsonParseException e) {
-            log.error("sync selector data have error:", e);
+private void start() {
+        // It could be initialized multiple times, so you need to control that.
+        if (RUNNING.compareAndSet(false, true)) {
+            // fetch all group configs.
+            this.fetchGroupConfig(ConfigGroupEnum.values());
+            int threadSize = serverList.size();
+            this.executor = new ThreadPoolExecutor(threadSize, threadSize, 60L, TimeUnit.SECONDS,
+                    new LinkedBlockingQueue<>(),
+                    SoulThreadFactory.create("http-long-polling", true));
+            // 发起长轮询
+            this.serverList.forEach(server -> this.executor.execute(new HttpLongPollingTask(server)));
+        } else {
+            log.info("soul http long polling was started, executor=[{}]", executor);
         }
     }
-}
 ```
 
-实际处理数据还是由`CommonPluginDataSubscriber`来处理。`CommonPluginDataSubscriber`在处理数据时，根据数据类型和操作类型来分别处理。当前我们测试的是更新选择器信息，所以会进入更新的逻辑，就是下面代码中的`BaseDataCache.getInstance().cacheRuleData(ruleData);`。
+`http长轮询`的任是：不停的进行轮询，先向`soul-admin`发起请求查看是否有配置信息（包括插件，选择器，规则和元数据）变更；如果有配置信息变更，再发起请求获取变更的数据；最后更新网关的缓存数据。
+
+```java
+如果有配置信息变更class HttpLongPollingTask implements Runnable {
+		//省略其他代码
+        @Override
+        public void run() {
+            while (RUNNING.get()) {
+                for (int time = 1; time <= retryTimes; time++) {
+                    try {
+                        doLongPolling(server);
+                    } catch (Exception e) {
+                   //省略其他代码
+                    }
+                }
+            }
+            log.warn("Stop http long polling.");
+        }
+    }
+
+private void doLongPolling(final String server) {
+    //省略其他代码
+        MultiValueMap<String, String> params = new LinkedMultiValueMap<>(8);
+        for (ConfigGroupEnum group : ConfigGroupEnum.values()) {
+		//先发起请求，查看是否有配置信息变更
+        String listenerUrl = server + "/configs/listener";
+        JsonArray groupJson = null;
+        try {
+            String json = this.httpClient.postForEntity(listenerUrl, httpEntity, String.class).getBody();
+        } catch (RestClientException e) {
+//省略其他代码
+        }
+         //如果有配置信息变更
+        if (groupJson != null) {
+            if (ArrayUtils.isNotEmpty(changedGroups)) {
+                log.info("Group config changed: {}", Arrays.toString(changedGroups));
+                //获取变更的配置信息
+                this.doFetchGroupConfig(server, changedGroups);
+            }
+        }
+    }
+    
+    private void doFetchGroupConfig(final String server, final ConfigGroupEnum... groups) {
+        //省略其他代码
+        
+        //再发起请求，获取变更的配置信息
+        String url = server + "/configs/fetch?" + StringUtils.removeEnd(params.toString(), "&");
+
+        try {
+            json = this.httpClient.getForObject(url, String.class);
+        } catch (RestClientException e) {
+//省略其他代码
+        }
+        // 使用获取的配置信息更新缓存
+        boolean updated = this.updateCacheWithJson(json);
+        if (updated) {
+            log.info("get latest configs: [{}]", json);
+            return;
+        }
+    }
+
+```
+
+
+
+在代码中`this.updateCacheWithJson(json)`，使用获取的配置信息更新缓存的处理操作，实际还是由`CommonPluginDataSubscriber`来处理。`CommonPluginDataSubscriber`在处理数据时，根据数据类型和操作类型来分别处理。当前我们测试的是更新选择器信息，所以会进入更新的逻辑，就是下面代码中的`BaseDataCache.getInstance().cacheRuleData(ruleData);`。
 
 ```java
 
@@ -337,7 +407,7 @@ public final class BaseDataCache {
 
 
 
-分析到这里，基于`nacos`数据同步的工作就算完成了。核心逻辑就是就更新的信息放到网关的内存中，使用时再去内存中拿，所以`Soul`网关的效率是很高的。
+分析到这里，基于`http长轮询`数据同步的工作就算完成了。核心逻辑是：网关主动请求`soul-admin`获取变更的配置信息，将变更的信息放到网关的内存中，使用时再去内存中拿，所以`Soul`网关的效率是很高的。
 
 
 
@@ -404,4 +474,4 @@ public final class BaseDataCache {
 
 
 
-最后，本文通过源码的方式跟踪了`Soul`网关是如何通过`Nacos`完成数据同步的：数据修改后，通过`Spring`发布修改事件，由`NacosConfigService`发送数据。在网关层有`Listener`接收变更的配置数据，然后进行处理数据，最后将数据保存到网关内存。
+最后，本文通过源码的方式跟踪了`Soul`网关是如何通过`http长轮询`完成数据同步的：数据修改后，先保存到 `soul-admin`的内存，然后通过`Soul`网关主动向`soul-admin`发起`http`请求获取配置信息，然后进行处理数据，最后将数据保存到网关内存。
