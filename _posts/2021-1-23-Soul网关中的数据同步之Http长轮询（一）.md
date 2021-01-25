@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Soul网关中的数据同步之Http长轮询
+title: Soul网关中的数据同步之Http长轮询（一）
 tags: Soul
 ---
 
