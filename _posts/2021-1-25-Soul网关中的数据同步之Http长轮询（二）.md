@@ -105,6 +105,6 @@ class HttpLongPollingTask implements Runnable {
 
 参考文献：
 
-- []Soul-数据同步机制-http长轮询同步(https://github.com/itmiwang/SE-Notes/blob/main/SourceCode/Soul/09.Soul-%E6%95%B0%E6%8D%AE%E5%90%8C%E6%AD%A5%E6%9C%BA%E5%88%B6-http%E9%95%BF%E8%BD%AE%E8%AF%A2%E5%90%8C%E6%AD%A5.md)
+- [Soul-数据同步机制-http长轮询同步](https://github.com/itmiwang/SE-Notes/blob/main/SourceCode/Soul/09.Soul-%E6%95%B0%E6%8D%AE%E5%90%8C%E6%AD%A5%E6%9C%BA%E5%88%B6-http%E9%95%BF%E8%BD%AE%E8%AF%A2%E5%90%8C%E6%AD%A5.md)
 - [数据同步原理](https://dromara.org/zh-cn/docs/soul/dataSync.html)
 
