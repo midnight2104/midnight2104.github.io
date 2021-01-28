@@ -165,15 +165,6 @@ public final class UpstreamCacheManager {
 
 在网关这一边，服务信息处理流程是（假设数据同步采用的是`websocket`）：
 
-```mermaid
-graph LR;
-	SoulWebsocketClient --> WebsocketDataHandler;
-	WebsocketDataHandler --> AbstractDataHandler;
-  AbstractDataHandler --> CommonPluginDataSubscriber;
-  CommonPluginDataSubscriber --> DividePluginDataHandler;
-  DividePluginDataHandler --> UpstreamCacheManager;
-```
-
 - `SoulWebsocketClient`: 后台 `wesocket` 信息在这里被监听，并发送给 `WebsocketDataHandler` 处理；
 - `WebsocketDataHandler`: 根据事件类型, 选择对应处理器 (`PluginDataHandler`、`RuleDataHandler`等)；
 - `AbstractDataHandler`: 根据事件变动类型(`refresh`、`update`等)， 调用处理器对应方法, 具体实现类会调用到 `CommonPluginDataSubscriber` 订阅器；
