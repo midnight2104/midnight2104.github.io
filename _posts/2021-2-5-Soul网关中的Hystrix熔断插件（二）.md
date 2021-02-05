@@ -102,3 +102,10 @@ public class HystrixCommand extends HystrixObservableCommand<Void> implements Co
 
 最后，本文主要分析了 `HystrixPlugin doExecutor` 的执行流程，关于`hystrix`熔断本身的机制并没有数量清楚，后续还需要再去看一看。
 
+
+
+
+
+参考链接：
+
+- [Soul网关源码学习（15）- HystrixPlugin 分析](https://blog.csdn.net/u012180773/article/details/113448338)
