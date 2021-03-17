@@ -1,6 +1,6 @@
 ---
 layout: post
-title:【Soul源码阅读系列（二）】Divide插件
+title: Soul源码阅读系列（二）Divide插件
 tags: Soul
 ---
 

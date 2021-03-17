@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Soul源码阅读系列（一）】Soul网关初探
+title: Soul源码阅读系列（一）Soul网关初探
 tags: Soul
 ---
 
