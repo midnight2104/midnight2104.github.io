@@ -1,6 +1,6 @@
 ---
 layout: post
-title: 2021-4-6-Soul源码阅读系列（五）Apache Dubbo插件
+title: Soul源码阅读系列（五）Apache Dubbo插件
 tags: Soul
 
 ---
