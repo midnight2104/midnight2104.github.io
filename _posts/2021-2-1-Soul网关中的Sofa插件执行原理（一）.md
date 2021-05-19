@@ -158,3 +158,4 @@ public Mono<Object> genericInvoker(final String body, final MetaData metaData, f
 
 
 至此，就跟踪完了`Soul`网关中对`Sofa`插件处理的核心操作：接入`sofa`服务，将`http`访问协议转化为`sofa`协议，通过`sofa`的泛化调用获取真正的接口服务信息。
+
