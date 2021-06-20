@@ -27,7 +27,7 @@ tags: Soul
 
   `Soul`官方在`soul-examples`模块提供了测试样例，其中的`soul-examples-springcloud`模块演示的是`Soul`网关对`springcloud`服务的支持。模块目录及配置信息如下：
 
-![1](https://midnight2104.github.io/img/2021-1-19/1.png)
+![1](https://qiniu.midnight2104.com/20210119/1.png)
 
 有关的配置信息还是和之前一样。在本项目中`Spring Cloud`的注册中心使用的是`nacos`。
 
@@ -87,24 +87,24 @@ logging:
 ##### 1.3 注册`spring cloud`服务
 在需要被代理的接口上使用注解`@SoulSpringCloudClient`，`@SoulSpringCloudClient`注解会把当前接口注册到`soul`网关中。使用方式如下：
 
-![1](https://midnight2104.github.io/img/2021-1-19/2.png)
+![1](https://qiniu.midnight2104.com/20210119/2.png)
 
 
 如果其他接口也想被网关代理，使用方式是一样的。在`@SoulSpringCloudClient`注解中，指定`path`即可。
 ##### 1.4 运行`spring cloud`服务
 运行`SoulTestSpringCloudApplication`，启动`soul-examples-springcloud`项目。成功启动后，可以在控制台看见接口被成功注册到`soul`网关中。
 
-![1](https://midnight2104.github.io/img/2021-1-19/3.png)
+![1](https://qiniu.midnight2104.com/20210119/3.png)
 
 ##### 1.5 启动`Soul Admin`和`Soul Bootstrap`
-参考上一篇的[Soul入门](https://midnight2104.github.io/2021/01/14/Soul%E5%85%A5%E9%97%A8/)，启动`Soul Admin`和`Soul Bootstrap`。`Soul`的后台界面如下：
+参考之前的文章，启动`Soul Admin`和`Soul Bootstrap`。`Soul`的后台界面如下：
 
 
-![1](https://midnight2104.github.io/img/2021-1-19/4.png)
+![1](https://qiniu.midnight2104.com/20210119/4.png)
 
 如果`spring cloud`插件没有开启，需要手动在管理界面开启一下。
 
-![1](https://midnight2104.github.io/img/2021-1-19/5.png)
+![1](https://qiniu.midnight2104.com/20210119/5.png)
 
 在`Soul Bootstrap`中，加入相关依赖：
 
@@ -140,7 +140,7 @@ logging:
 
 提一句，当`spring cloud`服务和`soul-bootstrap`等启动成功后，可以在注册中心看到这两个服务实例。
 
-![1](https://midnight2104.github.io/img/2021-1-19/8.png)
+![1](https://qiniu.midnight2104.com/20210119/8.png)
 
 ##### 1.6 体验`spring cloud`服务
 
@@ -148,11 +148,11 @@ logging:
 
 - 先直连`spring cloud`服务
 
-![1](https://midnight2104.github.io/img/2021-1-19/6.png)
+![1](https://qiniu.midnight2104.com/20210119/6.png)
 
 - 再通过`Soul`网关请求`spring cloud`服务
 
-![1](https://midnight2104.github.io/img/2021-1-19/7.png)
+![1](https://qiniu.midnight2104.com/20210119/7.png)
 
 
 

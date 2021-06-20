@@ -10,7 +10,7 @@ tags: Soul
 
 > `Soul` 数据同步的流程，`Soul` 网关在启动时，会从从配置服务同步配置数据，并且支持推拉模式获取配置变更信息，并且更新本地缓存。而管理员在管理后台，变更用户、规则、插件、流量配置，通过推拉模式将变更信息同步给 `Soul` 网关，具体是 `push` 模式，还是 `pull` 模式取决于配置。
 
-![1](https://midnight2104.github.io/img/2021-1-20/1.png)
+![](https://qiniu.midnight2104.com/20210519/1.png)
 
 > - 如果是 `websocket` 同步策略，则将变更后的数据主动推送给 `soul-web`，并且在网关层，会有对应的 `WebsocketDataHandler` 处理器处理来处 `admin` 的数据推送。
 
@@ -31,7 +31,7 @@ tags: Soul
 
 我们以一个实际调用过程为例，比如在`Soul`网关管理系统中，对一项规则进行修改：将`divide`插件中的`/http/order/findById`规则的重试次数修改为`2`。具体信息如下所示：
 
-![1](https://midnight2104.github.io/img/2021-1-20/2.png)
+![](https://qiniu.midnight2104.com/20210519/2.png)
 
 点击确认后，进入到`soul-admin`的`updateRule()`这个接口。
 
@@ -47,6 +47,10 @@ tags: Soul
 ```
 
 ##### 2.更新数据
+
+![](https://qiniu.midnight2104.com/20210519/5.png)
+
+
 
 进入到后端系统后，会先在数据中更新信息，然后通过`publishEvent()`方法将更新的信息同步到网关。（下面代码只是展示了主要的逻辑，完整的代码请参考`Soul`源码。）
 
@@ -73,6 +77,12 @@ tags: Soul
 ```
 
 在`publishEvent()`方法中调用了`eventPublisher.publishEvent()`，这个`eventPublisher`对象是一个`ApplicationEventPublisher`类，这个类的全限定名是`org.springframework.context.ApplicationEventPublisher`。看到这儿，我们知道了发布数据是通过`Spring`相关的功能来完成的。
+
+> 当有状态发生变化时，发布者调用 `ApplicationEventPublisher` 的 `publishEvent` 方法发布一个事件，`Spring `容器广播事件给所有观察者，调用观察者的 `onApplicationEvent` 方法把事件对象传递给观察者。调用 `publishEvent `方法有两种途径，一种是实现接口由容器注入 `ApplicationEventPublisher` 对象然后调用其方法，另一种是直接调用容器的方法，两种方法发布事件没有太大区别。
+>
+> - `ApplicationListener`：事件监听者，观察者；
+> - `ApplicationEvent`：`Spring` 事件，记录事件源、时间和数据；
+> - `ApplicationEventPublisher`：发布事件；
 
 ```java
     private void publishEvent(final RuleDO ruleDO, final List<RuleConditionDTO> ruleConditions) {
@@ -133,7 +143,7 @@ public class DataChangedEventDispatcher implements ApplicationListener<DataChang
 
 
 
-<img src="https://midnight2104.github.io/img/2021-1-20/3.png" alt="1" style="zoom:50%;" />
+![](https://qiniu.midnight2104.com/20210519/3.png)
 
 
 
@@ -273,9 +283,9 @@ public class WebsocketCollector {
 
 
 
-
-
 ##### 3.接收数据
+
+![](https://qiniu.midnight2104.com/20210519/6.png)
 
 当`soul-bootstrap`工程启动的时候，有配置类`WebsocketSyncDataConfiguration`配置为了`Spring Boot Starter`的方式启动。如果数据同步的方式配置的是`websocket`它就会启动。
 
@@ -467,7 +477,7 @@ public class WebsocketDataHandler {
 
 根据传入的数据类型，使用对应的`Handler`去处理，比如，我们修改的是规则信息，所以这里会调用`RuleDataHandler`来处理。跟踪进去后，发现`RuleDataHandler`继承了`AbstractDataHandler`类，其他几种数据类型也继承了该类。
 
-<img src="https://midnight2104.github.io/img/2021-1-20/4.png" alt="1" style="zoom:50%;" />
+![](https://qiniu.midnight2104.com/20210519/4.png)
 
 通过源码发现，这里运用了`模板方法`的设计模式。定义好了通用的方法`handle()`，其他方法都是抽象方法，由子类去实现。在`handle()`方法中通过`switch / case`表达式去匹配操作类型，然后执行实际的方法。
 
