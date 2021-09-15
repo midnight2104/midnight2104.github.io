@@ -116,7 +116,7 @@ public class SelectorServiceImpl implements SelectorService {
 
 ```
 
-在`Serrvice`类完成数据的持久化操作，即保存数据到数据库，这个大家应该很熟悉了，就不展开。关于更新upstream`操作，放到后面对应的章节中进行分析，重点关注发布事件的操作，它会进行数据同步。
+在`Serrvice`类完成数据的持久化操作，即保存数据到数据库，这个大家应该很熟悉了，就不展开。关于更新`upstream`操作，放到后面对应的章节中进行分析，重点关注发布事件的操作，它会进行数据同步。
 
 
 
@@ -405,13 +405,13 @@ public class WebsocketCollector {
 
 我们给的案例是一个新增操作 ，是一个增量同步，所以会走
 
- `                SESSION_SET.forEach(session -> sendMessageBySession(session, message));`
+ `SESSION_SET.forEach(session -> sendMessageBySession(session, message));`
 
 这个逻辑。
 
 再通过
 
-`            session.getBasicRemote().sendText(message);`
+`session.getBasicRemote().sendText(message);`
 
 将数据发送了出去。
 
