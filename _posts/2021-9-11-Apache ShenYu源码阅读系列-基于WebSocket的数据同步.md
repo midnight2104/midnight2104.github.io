@@ -1,7 +1,7 @@
 ---
 layout: post
 title: Apache ShenYu源码阅读系列-基于WebSocket的数据同步
-tags: Apache ShenYu
+tags: ShenYu
 ---
 
 > [Apache ShenYu](https://shenyu.apache.org/zh/docs/index) 是一个异步的，高性能的，跨语言的，响应式的 `API` 网关。
@@ -313,7 +313,7 @@ public class DataSyncConfiguration {
 
 
 
-当我们主动配置，采用`websocket`进行数据同步时，`WebsocketDataChangedListener`就会生成。所以在事件处理方法`onApplicationEvent()`中，就会到相应的`listener`中。在我们的案例中，是新增加了一条选择器数据，数据通过采用的是`websocket`，所以，代码会进入到`WebsocketDataChangedListener`进行选择器数据变更处理。
+当我们主动配置，采用`websocket`进行数据同步时，`WebsocketDataChangedListener`就会生成。所以在事件处理方法`onApplicationEvent()`中，就会到相应的`listener`中。在我们的案例中，是新增加了一条选择器数据，数据同步采用的是`websocket`，所以，代码会进入到`WebsocketDataChangedListener`进行选择器数据变更处理。
 
 ```java
     @Override
@@ -327,7 +327,7 @@ public class DataSyncConfiguration {
                 // 省略了其他逻辑
                     
                 case SELECTOR:   // 选择器信息
-                    listener.onSelectorChanged((List<SelectorData>) event.getSource(), event.getEventType());   // WebsocketDataChangedListener进行选择器数据变更处理
+                    listener.onSelectorChanged((List<SelectorData>) event.getSource(), event.getEventType());   // 在我们的案例中，会进入到WebsocketDataChangedListener进行选择器数据变更处理
                     break;
          }
     }
