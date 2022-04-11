@@ -26,6 +26,7 @@ tags: ShenYu
 
 
 
+
 - 关于Byte Buddy
 
 `Byte Buddy`是一个代码生成和操作库，在`Java`应用程序的运行期间创建和修改`Java`类。可以利用它创建任何类，不像`JDK`动态代理那样强制实现一个接口。此外，`Byte Buddy`提供了方便的API，用于手动、使用`Java`代理或在构建期间改变类。
